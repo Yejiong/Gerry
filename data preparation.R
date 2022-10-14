@@ -137,6 +137,7 @@ ca.data=process("ca")
 #co.data=process("co")
 ct.data=process("ct")
 fl.data=process("fl")
+tx.data=process("tx")
 ga.data=process("ga")
 hi.data=process("hi")
 
@@ -169,7 +170,6 @@ pa.data=process("pa")
 ri.data=process("ri")
 sc.data=process("sc")
 tn.data=process("tn")
-tx.data=process("tx")
 ut.data=process("ut")
 va.data=process("va")
 wa.data=process("wa")
@@ -178,20 +178,10 @@ wv.data=process("wv")
 
 
 
-ind.data=rbind(al.data[[2]],ar.data[[2]],az.data[[2]],ca.data[[2]],ct.data[[2]],fl.data[[2]],ga.data[[2]],hi.data[[2]],tx.data[[2]])
+ind.data=rbind(ca.data[[2]],tx.data[[2]])
 ind.data=ind.data%>%mutate(T=ifelse(state %in% c("ar","ca","hi","al","ar") ,1,0))
 
-
-al.data=process("al")
-ar.data=process("ar")
-az.data=process("az")
-ca.data=process("ca")
-#co.data=process("co")
-ct.data=process("ct")
-fl.data=process("fl")
-ga.data=process("ga")
-hi.data=process("hi")
-
+ 
 
 
 

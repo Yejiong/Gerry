@@ -94,19 +94,18 @@ quantile=function(taus, y, wt){
 QTE=function(dataset, taus){
   
   
-  pscore.reg <- glm(T ~ X, data=dataset, family=binomial)
-  pscore <- fitted(pscore.reg)
+  #pscore.reg <- glm(T ~ , data=dataset, family=binomial)
+  #pscore <- fitted(pscore.reg)
   
-  q.trt=quantile(taus=taus, y=dataset$Y, wt=dataset$T/pscore)
-  q.control=quantile(taus=taus, y=dataset$Y, wt=(1-dataset$T)/(1-pscore))
+  q.trt=quantile(taus=taus, y=dataset$Y, wt=dataset$T)
+  q.control=quantile(taus=taus, y=dataset$Y, wt=(1-dataset$T))
   return(q.trt-q.control)
   
 }
 
-QTE(dataset=mydat,taus=c(0.1, 0.25, 0.5, 0.75, 0.90, 0.95))
- 
 
-
+black=QTE(dataset=rename(filter(ind.data,race=="Black"),Y=power),taus=c(0.1, 0.25, 0.5, 0.75, 0.90, 0.95))
+white=QTE(dataset=rename(filter(ind.data,race=="White"),Y=power),taus=c(0.1, 0.25, 0.5, 0.75, 0.90, 0.95))
 
  
 

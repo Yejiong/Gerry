@@ -9,24 +9,16 @@
 
 
 # visualize power distributon by race
-ca.data[[1]]%>%ggplot(aes(power,col=race,fill=race))+
-  geom_histogram(aes(y=..density..), binwidth=0.0000001, position="dodge",alpha=0.1)+
+ind.data%>%ggplot(aes(power,col=race,fill=race))+
   geom_density(alpha=0.1)+
   scale_fill_startrek()+scale_color_startrek()+
   theme_bw()+
   xlim(c(0,0.00001))+
-  facet_grid(.~state,  scales = "fixed")
+  facet_grid(state~.,  scales = "fixed")
 
 
-
-
-ind.power%>%ggplot(aes(power,col=race,fill=race))+
-  geom_histogram(aes(y=..density..), binwidth=0.0000001, position="dodge",alpha=0.1)+
-  geom_density(alpha=0.1)+
-  scale_fill_startrek()+scale_color_startrek()+
-  xlim(c(0,0.00001))+
-  theme_bw()+
-  facet_grid(.~state,  scales = "fixed")
+geom_histogram(aes(y=..density..), binwidth=0.0000001, position="dodge",alpha=0.1)+
+  
 
 saveRDS(ind.power,file="ind.power.rds")
 
