@@ -11,11 +11,11 @@ library(readr)
 library(foreach)
 library(doParallel)
 
-
+registerDoParallel(detectCores())
+getDoParWorkers()
 process<-function(state){
   
-  registerDoParallel(detectCores())
-  
+   
   #state="ca"
   ######### read in congressional district map 2010
 
@@ -88,39 +88,47 @@ process<-function(state){
   #   ungroup()%>%mutate(rep.wt=ifelse(rep>dem, rep/(rep+dem), 0),
   #                      dem.wt=ifelse(rep<dem, dem/(rep+dem), 0))
   
+  # calculate expected seat share
   distpower=st_drop_geometry(block)%>%
     select(dist,party_dem,party_rep,total_reg)%>%
     group_by(dist)%>%
     summarise(dem=sum(party_dem), rep=sum(party_rep), tot=sum(total_reg))%>%
-    ungroup()%>%mutate(rep.wt=ifelse(rep>dem, 1/rep, 0),
-                       dem.wt=ifelse(rep<dem, 1/dem, 0))
+    ungroup()%>%mutate(rep.wt=ifelse(rep>dem, 1/(rep+(tot-dem-rep)/2), 0),
+                       dem.wt=ifelse(rep<dem, 1/(dem+(tot-dem-rep)/2), 0))
   
+   
   voter.power=block%>%left_join(distpower, by="dist")%>%
     mutate(black.power=dem.wt*(0.87+(1-0.87-0.07)/2)+rep.wt*(0.07+(1-0.87-0.07)/2),
            hisp.power=dem.wt*(0.63+(1-0.63-0.27)/2)+rep.wt*(0.27+(1-0.63-0.27)/2),
            white.power=dem.wt*(0.39+(1-0.54-0.39)/2)+rep.wt*(0.54+(1-0.54-0.39)/2),
-           asian.power=dem.wt*(0.72+(1-0.72-0.17)/2)+rep.wt*(0.17+(1-0.72-0.17)/2))
+           asian.power=dem.wt*(0.72+(1-0.72-0.17)/2)+rep.wt*(0.17+(1-0.72-0.17)/2))%>%
+    mutate(black.power=black.power*tot/100,
+           hisp.power=hisp.power*tot/100,
+           white.power=white.power*tot/100,
+           asian.power=asian.power*tot/100)
+  
+  #names(voter.power)
    
-  black.power=foreach(i = 1:dim(voter.power)[1], .combine =c)%dopar%{
-    if(voter.power$eth1_aa[i]>0){rep(voter.power$black.power[i],voter.power$eth1_aa[i])}
-  }
-  hisp.power=foreach(i = 1:dim(voter.power)[1], .combine =c)%dopar%{
-    if(voter.power$eth1_hisp[i]>0){rep(voter.power$hisp.power[i],voter.power$eth1_hisp[i])}
-  }
-  white.power=foreach(i = 1:dim(voter.power)[1], .combine =c)%dopar%{
-    if(voter.power$eth1_eur[i]>0){rep(voter.power$white.power[i],voter.power$eth1_eur[i])}
-  }
-  asian.power=foreach(i = 1:dim(voter.power)[1], .combine =c)%dopar%{
-    if(voter.power$eth1_esa[i]>0){rep(voter.power$asian.power[i],voter.power$eth1_esa[i])}
-  }
-  
-  ind.power=data.frame(power=c(black.power,hisp.power,white.power,asian.power),
-                       race=c(rep("Black",length(black.power)),rep("Hispanic",length(hisp.power)),rep("White",length(white.power)),rep("Asian",length(asian.power))),
-                       state=state)
-  
+  # black.power=foreach(i = 1:dim(voter.power)[1], .combine =c)%dopar%{
+  #   if(voter.power$eth1_aa[i]>0){rep(voter.power$black.power[i],voter.power$eth1_aa[i])}
+  # }
+  # hisp.power=foreach(i = 1:dim(voter.power)[1], .combine =c)%dopar%{
+  #   if(voter.power$eth1_hisp[i]>0){rep(voter.power$hisp.power[i],voter.power$eth1_hisp[i])}
+  # }
+  # white.power=foreach(i = 1:dim(voter.power)[1], .combine =c)%dopar%{
+  #   if(voter.power$eth1_eur[i]>0){rep(voter.power$white.power[i],voter.power$eth1_eur[i])}
+  # }
+  # asian.power=foreach(i = 1:dim(voter.power)[1], .combine =c)%dopar%{
+  #   if(voter.power$eth1_esa[i]>0){rep(voter.power$asian.power[i],voter.power$eth1_esa[i])}
+  # }
+  # 
+  # ind.power=data.frame(power=c(black.power,hisp.power,white.power,asian.power),
+  #                      race=c(rep("Black",length(black.power)),rep("Hispanic",length(hisp.power)),rep("White",length(white.power)),rep("Asian",length(asian.power))),
+  #                      state=state)
+  # 
  
   
-  return(list(state,ind.power,voter.power))
+  return(voter.power)
 }
 
 
@@ -129,7 +137,7 @@ state1=substr(list.files("/home/zhoux104/R/Gerry/congressional2010"),1,2)
 state2=substr(list.files("/home/zhoux104/R/Gerry/block2010"),1,2)
 state3=tolower(substr(list.files("/home/zhoux104/R/Gerry/voter2021"),1,2))
 states=intersect(intersect(state1,state2),state3)
-
+ 
 al.data=process("al")
 ar.data=process("ar")
 az.data=process("az")
@@ -140,8 +148,6 @@ fl.data=process("fl")
 tx.data=process("tx")
 ga.data=process("ga")
 hi.data=process("hi")
-
-
 ia.data=process("ia")
 id.data=process("id")
 il.data=process("il")
@@ -176,28 +182,101 @@ wa.data=process("wa")
 wi.data=process("wi")
 wv.data=process("wv")
 
+save(al.data, file = "data/al.data.RData")
+save(ar.data, file = "data/ar.data.RData")
+save(az.data, file = "data/az.data.RData")
+save(ca.data, file = "data/ca.data.RData")
+save(ct.data, file = "data/ct.data.RData")
+save(tx.data, file = "data/tx.data.RData")
+save(ga.data, file = "data/ga.data.RData")
+save(hi.data, file = "data/hi.data.RData")
+save(ia.data, file = "data/ia.data.RData")
+save(id.data, file = "data/id.data.RData")
+save(il.data, file = "data/il.data.RData")
+save(in.data, file = "data/in.data.RData")
+save(ks.data, file = "data/ks.data.RData")
+save(ky.data, file = "data/ky.data.RData")
+save(la.data, file = "data/la.data.RData")
+save(ma.data, file = "data/ma.data.RData")
+save(md.data, file = "data/md.data.RData")
+save(me.data, file = "data/me.data.RData")
+save(mi.data, file = "data/mi.data.RData")
+save(mn.data, file = "data/mn.data.RData")
+save(mo.data, file = "data/mo.data.RData")
+save(ms.data, file = "data/ms.data.RData")
+save(nc.data, file = "data/nc.data.RData")
+save(ne.data, file = "data/ne.data.RData")
+save(nh.data, file = "data/nh.data.RData")
+save(nj.data, file = "data/nj.data.RData")
+save(nm.data, file = "data/nm.data.RData")
+save(nv.data, file = "data/nv.data.RData")
+save(ny.data, file = "data/ny.data.RData")
+save(oh.data, file = "data/oh.data.RData")
+save(ok.data, file = "data/ok.data.RData")
+save(or.data, file = "data/or.data.RData")
+save(pa.data, file = "data/pa.data.RData")
+save(ri.data, file = "data/ri.data.RData")
+save(sc.data, file = "data/sc.data.RData")
+save(tn.data, file = "data/tn.data.RData")
+save(ut.data, file = "data/ut.data.RData")
+save(va.data, file = "data/va.data.RData")
+save(wa.data, file = "data/wa.data.RData")
+save(wi.data, file = "data/wi.data.RData")
+save(wv.data, file = "data/wv.data.RData")
 
+names(al.data)
+power.data=rbind(
+  st_drop_geometry(al.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(ar.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(az.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(ca.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(ct.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(fl.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(tx.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(ga.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(hi.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(ia.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(id.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(il.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(in.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(ks.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(ky.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(la.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(ma.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(md.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(me.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(mi.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(mn.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(mo.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(ms.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(nc.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(ne.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(nh.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(nj.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(nm.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(nv.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(ny.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(oh.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(ok.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(or.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(pa.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(ri.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(sc.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(tn.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(ut.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(va.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(wa.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(wi.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")],
+  st_drop_geometry(wv.data)[,c("STATE","hisp.power","black.power","asian.power","white.power","eth1_eur","eth1_aa","eth1_hisp","eth1_esa")]
+)
+ 
+ 
+save(power.data, file = "data/power.data.RData")
+load("data/power.data.RData")
 
-ind.data=rbind(ca.data[[2]],tx.data[[2]])
 ind.data=ind.data%>%mutate(T=ifelse(state %in% c("ar","ca","hi","al","ar") ,1,0))
 
  
-
-
-
-cl <- makeCluster(40)
-registerDoParallel(cl)
-
-result=foreach(i = 1:length(states), .packages=c('dplyr', 'tidyr', 'ggplot2','ggsci','sf',
-                                                 'spData','tmap','tools','readr',
-                                                 'foreach','doParallel'))%dopar%{
-  process(states[i])
-}
-stopCluster(cl)
-
-# combine results
-dim(result)
-str(result[[1]][[1]])
 
  
 

@@ -1,27 +1,33 @@
 
-
-
-
-#######################################
-
-
-
-
-
-# visualize power distributon by race
-ind.data%>%ggplot(aes(power,col=race,fill=race))+
-  geom_density(alpha=0.1)+
+ 
+power.data%>%ggplot(aes(black.power))+
+  geom_density(alpha=0.1,aes(x=black.power,y=..scaled..,weight=eth1_aa,col="red"))+
+  geom_density(alpha=0.1,aes(x=white.power,y=..scaled..,weight=eth1_eur,col="blue"))+
   scale_fill_startrek()+scale_color_startrek()+
   theme_bw()+
-  xlim(c(0,0.00001))+
-  facet_grid(state~.,  scales = "fixed")
+  facet_wrap(~STATE,  scales = "fixed")
 
 
-geom_histogram(aes(y=..density..), binwidth=0.0000001, position="dodge",alpha=0.1)+
-  
+power.data%>%ggplot(aes(white.power))+
+  geom_density(alpha=0.1,aes(x=white.power,y=..scaled..,weight=eth1_eur,col="blue"))+
+  scale_fill_startrek()+scale_color_startrek()+
+  theme_bw()+
+  facet_wrap(~STATE,  scales = "fixed")
 
-saveRDS(ind.power,file="ind.power.rds")
 
+power.data%>%ggplot(aes(black.power))+
+  geom_density(alpha=0.1,aes(x=asian.power,y=..scaled..,weight=eth1_esa,col="yellow"))+
+  scale_fill_startrek()+scale_color_startrek()+
+  theme_bw()+
+  facet_wrap(~STATE,  scales = "fixed")
+
+
+
+power.data%>%ggplot(aes(black.power))+
+  geom_density(alpha=0.1,aes(x=hisp.power,y=..scaled..,weight=eth1_hisp,col="brown"))+
+  scale_fill_startrek()+scale_color_startrek()+
+  theme_bw()+
+  facet_wrap(~STATE,  scales = "fixed")
 
 
 
