@@ -97,15 +97,43 @@ QTE=function(dataset, taus){
   #pscore.reg <- glm(T ~ , data=dataset, family=binomial)
   #pscore <- fitted(pscore.reg)
   
-  q.trt=quantile(taus=taus, y=dataset$Y, wt=dataset$T)
-  q.control=quantile(taus=taus, y=dataset$Y, wt=(1-dataset$T))
+  q.trt=quantile(taus=taus, y=dataset$Y, wt=dataset$T*dataset$eth1_hisp)
+  q.control=quantile(taus=taus, y=dataset$Y, wt=(1-dataset$T)*dataset$eth1_hisp)
   return(q.trt-q.control)
   
 }
 
+#unique(power.data$STATE)
+power.data=power.data%>%
+  mutate(A=ifelse(STATE %in% c("Arizona","California","Hawaii","Idaho","Montana","New Jersey","Washington","Alaska","Arkansas","Colorado","Missouri","Ohio","Pennsylvania","Iowa"),
+                  "Nonpartisan or bipartisan commissions",
+                  ifelse(STATE %in% c("Delaware","Illinois","Maryland","Massachusetts","Nevada","New Mexico","New York","Oregon","Rhode Island"),
+                         "Democratic",
+                         ifelse(STATE %in% c("Alabama","Florida","Georgia","Indiana","Kansas","Kentucky","Mississippi","New Hampshire","North Carolina","North Dakota","Oklahoma","South Carolina","South Dakota","Tennessee","Texas","Utah","West Virginia","Wyoming"),"Republican",""))))%>%
+  filter(A %in% c("Republican","Nonpartisan or bipartisan commissions"))%>%mutate(T=ifelse(A=="Republican",1,0))
+#table(power.data$STATE,power.data$A)
 
-black=QTE(dataset=rename(filter(ind.data,race=="Black"),Y=power),taus=c(0.1, 0.25, 0.5, 0.75, 0.90, 0.95))
-white=QTE(dataset=rename(filter(ind.data,race=="White"),Y=power),taus=c(0.1, 0.25, 0.5, 0.75, 0.90, 0.95))
+taus=c(0.1, 0.25, 0.5, 0.75, 0.90, 0.95)
+q.trt=quantile(taus=taus, y=power.data$black.power, wt=power.data$T*power.data$eth1_aa)
+q.control=quantile(taus=taus, y=power.data$black.power, wt=(1-power.data$T)*power.data$eth1_aa)
+black.qte=q.trt-q.control
+plot(c(0.1, 0.25, 0.5, 0.75, 0.90, 0.95),black.qte,type="b")
+
+q.trt=quantile(taus=taus, y=power.data$white.power, wt=power.data$T*power.data$eth1_eur)
+q.control=quantile(taus=taus, y=power.data$white.power, wt=(1-power.data$T)*power.data$eth1_eur)
+white.qte=q.trt-q.control
+plot(c(0.1, 0.25, 0.5, 0.75, 0.90, 0.95),white.qte,type="b")
+
+q.trt=quantile(taus=taus, y=power.data$hisp.power, wt=power.data$T*power.data$eth1_hisp)
+q.control=quantile(taus=taus, y=power.data$hisp.power, wt=(1-power.data$T)*power.data$eth1_hisp)
+hisp.qte=q.trt-q.control
+plot(c(0.1, 0.25, 0.5, 0.75, 0.90, 0.95),hisp.qte,type="b")
+
+
+q.trt=quantile(taus=taus, y=power.data$asian.power, wt=power.data$T*power.data$eth1_esa)
+q.control=quantile(taus=taus, y=power.data$asian.power, wt=(1-power.data$T)*power.data$eth1_esa)
+asian.qte=q.trt-q.control
+plot(c(0.1, 0.25, 0.5, 0.75, 0.90, 0.95),asian.qte,type="b")
 
  
 

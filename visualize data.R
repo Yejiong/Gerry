@@ -1,5 +1,42 @@
+power.data=power.data%>%
+  mutate(A=ifelse(STATE %in% c("Arizona","California","Hawaii","Idaho","Montana","New Jersey","Washington","Alaska","Arkansas","Colorado","Missouri","Ohio","Pennsylvania","Iowa"),
+                  "Nonpartisan or bipartisan commissions",
+                  ifelse(STATE %in% c("Delaware","Illinois","Maryland","Massachusetts","Nevada","New Mexico","New York","Oregon","Rhode Island"),
+                         "Democratic",
+                         ifelse(STATE %in% c("Alabama","Florida","Georgia","Indiana","Kansas","Kentucky","Mississippi","New Hampshire","North Carolina","North Dakota","Oklahoma","South Carolina","South Dakota","Tennessee","Texas","Utah","West Virginia","Wyoming"),"Republican",""))))
+  
+  
+power.data%>%
+  ggplot(aes(black.power))+
+  geom_density(alpha=0.1,aes(x=black.power,y=..scaled..,weight=eth1_aa,col=A))+
+  scale_fill_startrek()+scale_color_startrek()+
+  theme_bw()
 
- 
+power.data%>%
+  ggplot(aes(white.power))+
+  geom_density(alpha=0.1,aes(x=white.power,y=..scaled..,weight=eth1_eur,col=A))+
+  scale_fill_startrek()+scale_color_startrek()+
+  theme_bw()
+
+power.data%>%
+  ggplot(aes(hisp.power))+
+  geom_density(alpha=0.1,aes(x=hisp.power,y=..scaled..,weight=eth1_hisp,col=A))+
+  scale_fill_startrek()+scale_color_startrek()+
+  theme_bw()
+
+power.data%>%
+  ggplot(aes(asian.power))+
+  geom_density(alpha=0.1,aes(x=asian.power,y=..scaled..,weight=eth1_esa,col=A))+
+  scale_fill_startrek()+scale_color_startrek()+
+  theme_bw()
+
+
+
+
+
+
+
+
 power.data%>%ggplot(aes(black.power))+
   geom_density(alpha=0.1,aes(x=black.power,y=..scaled..,weight=eth1_aa,col="red"))+
   geom_density(alpha=0.1,aes(x=white.power,y=..scaled..,weight=eth1_eur,col="blue"))+
