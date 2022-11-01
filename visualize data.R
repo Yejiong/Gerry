@@ -8,25 +8,25 @@ power.data=power.data%>%
   
 power.data%>%
   ggplot(aes(black.power))+
-  geom_density(alpha=0.1,aes(x=black.power,y=..scaled..,weight=eth1_aa,col=A))+
+  geom_density(alpha=0.1,aes(x=black.power,y=..scaled..,weight=eth1_aa,group=STATE, col=A))+
   scale_fill_startrek()+scale_color_startrek()+
   theme_bw()
 
 power.data%>%
   ggplot(aes(white.power))+
-  geom_density(alpha=0.1,aes(x=white.power,y=..scaled..,weight=eth1_eur,col=A))+
+  geom_density(alpha=0.1,aes(x=white.power,y=..scaled..,weight=eth1_eur,group=STATE,col=A))+
   scale_fill_startrek()+scale_color_startrek()+
   theme_bw()
 
 power.data%>%
   ggplot(aes(hisp.power))+
-  geom_density(alpha=0.1,aes(x=hisp.power,y=..scaled..,weight=eth1_hisp,col=A))+
+  geom_density(alpha=0.1,aes(x=hisp.power,y=..scaled..,weight=eth1_hisp,group=STATE,col=A))+
   scale_fill_startrek()+scale_color_startrek()+
   theme_bw()
 
 power.data%>%
   ggplot(aes(asian.power))+
-  geom_density(alpha=0.1,aes(x=asian.power,y=..scaled..,weight=eth1_esa,col=A))+
+  geom_density(alpha=0.1,aes(x=asian.power,y=..scaled..,weight=eth1_esa,group=STATE,col=A))+
   scale_fill_startrek()+scale_color_startrek()+
   theme_bw()
 
