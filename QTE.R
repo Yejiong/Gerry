@@ -105,6 +105,10 @@ QTE=function(dataset, taus){
 
 #unique(power.data$STATE)
 power.data=power.data%>%
+  mutate(black.power=black.power*100,
+         white.power=white.power*100,
+         hisp.power=hisp.power*100,
+         asian.power=asian.power*100)%>%
   mutate(A=ifelse(STATE %in% c("Arizona","California","Hawaii","Idaho","Montana","New Jersey","Washington","Alaska","Arkansas","Colorado","Missouri","Ohio","Pennsylvania","Iowa"),
                   "Nonpartisan or bipartisan commissions",
                   ifelse(STATE %in% c("Delaware","Illinois","Maryland","Massachusetts","Nevada","New Mexico","New York","Oregon","Rhode Island"),
@@ -113,28 +117,32 @@ power.data=power.data%>%
   filter(A %in% c("Republican","Nonpartisan or bipartisan commissions"))%>%mutate(T=ifelse(A=="Republican",1,0))
 #table(power.data$STATE,power.data$A)
 
-taus=c(0.1, 0.25, 0.5, 0.75, 0.90, 0.95)
+taus=c(0.05,0.1, 0.25, 0.5, 0.75, 0.90, 0.95)
 q.trt=quantile(taus=taus, y=power.data$black.power, wt=power.data$T*power.data$eth1_aa)
 q.control=quantile(taus=taus, y=power.data$black.power, wt=(1-power.data$T)*power.data$eth1_aa)
 black.qte=q.trt-q.control
-plot(c(0.1, 0.25, 0.5, 0.75, 0.90, 0.95),black.qte,type="b")
+plot(c(0.05,0.1, 0.25, 0.5, 0.75, 0.90, 0.95),black.qte,type="b")
 
 q.trt=quantile(taus=taus, y=power.data$white.power, wt=power.data$T*power.data$eth1_eur)
 q.control=quantile(taus=taus, y=power.data$white.power, wt=(1-power.data$T)*power.data$eth1_eur)
 white.qte=q.trt-q.control
-plot(c(0.1, 0.25, 0.5, 0.75, 0.90, 0.95),white.qte,type="b")
+plot(c(0.05,0.1, 0.25, 0.5, 0.75, 0.90, 0.95),white.qte,type="b")
 
 q.trt=quantile(taus=taus, y=power.data$hisp.power, wt=power.data$T*power.data$eth1_hisp)
 q.control=quantile(taus=taus, y=power.data$hisp.power, wt=(1-power.data$T)*power.data$eth1_hisp)
 hisp.qte=q.trt-q.control
-plot(c(0.1, 0.25, 0.5, 0.75, 0.90, 0.95),hisp.qte,type="b")
+plot(c(0.05,0.1, 0.25, 0.5, 0.75, 0.90, 0.95),hisp.qte,type="b")
 
 
 q.trt=quantile(taus=taus, y=power.data$asian.power, wt=power.data$T*power.data$eth1_esa)
 q.control=quantile(taus=taus, y=power.data$asian.power, wt=(1-power.data$T)*power.data$eth1_esa)
 asian.qte=q.trt-q.control
-plot(c(0.1, 0.25, 0.5, 0.75, 0.90, 0.95),asian.qte,type="b")
+plot(c(0.05,0.1, 0.25, 0.5, 0.75, 0.90, 0.95),asian.qte,type="b")
 
  
-
+data.frame(q=rep(c(0.05,0.1, 0.25, 0.5, 0.75, 0.90, 0.95),4),qte=c(black.qte,white.qte,hisp.qte,asian.qte),race=rep(c("Black","White","Hispanic","Asian"),each=7))%>%
+  ggplot(aes(x=q,y=qte,col=race))+
+  geom_point()+
+  geom_line()+
+  scale_color_startrek()
  
